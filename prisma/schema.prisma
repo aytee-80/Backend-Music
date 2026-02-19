@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  firebaseId  String?  @unique
+
+  name        String
+  email       String   @unique
+  password    String
+  artist      String?
+
+  avatarUrl   String?
+  bio         String?
+
+  donationsEnabled Boolean @default(false)
+  donationLink     String?
+
+  createdAt   DateTime @default(now())
+
+  // Relations
+  links       SocialLink[]
+  songs       Song[]
+  posts       Post[]
+  playlists   Playlist[]
+  albums      Album[]
+
+  likedSongs     Song[]     @relation("LikedSongs")
+  savedPlaylists Playlist[] @relation("SavedPlaylists")
+  likedAlbums    Album[]    @relation("LikedAlbums")
+}
+
+model SocialLink {
+  id        Int    @id @default(autoincrement())
+  platform  String 
+  url       String
+
+  userId    Int
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, platform])
+}
+
+
+
+model Song {
+  id          Int      @id @default(autoincrement())
+  title       String
+  artist      String
+  audioUrl    String
+  coverUrl    String?
+  duration    Int?
+  isReleased  Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  uploaderId  Int
+  uploader    User     @relation(fields: [uploaderId], references: [id])
+
+  posts       Post[]
+  albums      Album[]  @relation("AlbumSongs")
+  likedBy     User[]   @relation("LikedSongs")
+  playlists   PlaylistSong[]
+}
+
+
+
+model Post {
+  id          Int      @id @default(autoincrement())
+  description String
+  postType    String   // image | video
+  visualUrl   String
+  createdAt   DateTime @default(now())
+
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+
+  songId      Int
+  song        Song     @relation(fields: [songId], references: [id])
+}
+
+
+model Playlist {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  ownerId     Int
+  owner       User     @relation(fields: [ownerId], references: [id])
+
+  songs       PlaylistSong[]
+  savedBy     User[]   @relation("SavedPlaylists")
+}
+
+model PlaylistSong {
+  id          Int      @id @default(autoincrement())
+  playlistId  Int
+  songId      Int
+  position    Int
+
+  playlist   Playlist @relation(fields: [playlistId], references: [id])
+  song       Song     @relation(fields: [songId], references: [id])
+}
+
+
+model Album {
+  id          Int      @id @default(autoincrement())
+  title       String
+  coverUrl    String?
+  releaseDate DateTime?
+  createdAt   DateTime @default(now())
+
+  artistId    Int
+  artist      User     @relation(fields: [artistId], references: [id])
+
+  songs       Song[]   @relation("AlbumSongs")
+  likedBy     User[]   @relation("LikedAlbums")
+}
+
