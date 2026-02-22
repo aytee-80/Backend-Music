@@ -1,7 +1,12 @@
 import { Router } from "express";
-import { login } from "../controllers/authController";
-import { authMiddleware } from "../middleware/authMiddleware";
+import { controllers } from "../controllers/controllers.index";
+import { Middleware } from "../middleware/middleware.index";
+
+const { authController} = controllers();
+const {authMiddleware} = Middleware();
 
 const router = Router(); 
 
-router.post("/login", authMiddleware , login);
+router.post("/", authMiddleware.firebaseMiddleware , authController.login);
+
+export { router as authRouter};
